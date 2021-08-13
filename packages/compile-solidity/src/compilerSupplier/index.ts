@@ -24,6 +24,12 @@ export namespace CompilerSupplier {
   };
 }
 
+export type CreateCompilerSupplierOptions =
+  Common.CompilerSupplier.Supplier.Options<
+    CompilerSupplier.Specification,
+    Common.CompilerSupplier.Supplier.StrategyName<CompilerSupplier.Specification>
+  >;
+
 export const createCompilerSupplier = Common.CompilerSupplier.forDefinition<
   CompilerSupplier.Specification
 >({
@@ -58,14 +64,7 @@ export const createCompilerSupplier = Common.CompilerSupplier.forDefinition<
       return "version-range";
     }
 
-    const message =
-      `Could not find a compiler version matching ${version}. ` +
-      `compilers.solc.version option must be a string specifying:\n` +
-      `   - a path to a locally installed solcjs\n` +
-      `   - a solc version or range (ex: '0.4.22' or '^0.5.0')\n` +
-      `   - a docker image name (ex: 'stable')\n` +
-      `   - 'native' to use natively installed solc\n`;
-    throw new Error(message);
+    throw new UnknownStrategyError(options);
   },
 
   strategyConstructors: {
@@ -75,3 +74,22 @@ export const createCompilerSupplier = Common.CompilerSupplier.forDefinition<
     "version-range": VersionRange
   }
 });
+
+export class UnknownStrategyError extends Error {
+  constructor(options: CreateCompilerSupplierOptions) {
+    const {
+      solcConfig: {
+        version
+      }
+    } = options;
+
+    super(
+      `Could not find a compiler version matching ${version}. ` +
+      `compilers.solc.version option must be a string specifying:\n` +
+      `   - a path to a locally installed solcjs\n` +
+      `   - a solc version or range (ex: '0.4.22' or '^0.5.0')\n` +
+      `   - a docker image name (ex: 'stable')\n` +
+      `   - 'native' to use natively installed solc\n`
+    );
+  }
+}
